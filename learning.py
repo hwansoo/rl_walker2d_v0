@@ -128,7 +128,7 @@ if __name__ == "__main__":
             ]
         )
         if args.enhanced_obs_transfer_learning:
-            folder_name = "enhanced_obs_transfer_learning"
+            folder_name = "enhanced_obs_transfer_learning_v2"
         elif args.enhanced_obs and args.bump_challenge:
             folder_name = "enhanced_obs_challenge"
         elif args.enhanced_obs and args.bump_practice:
