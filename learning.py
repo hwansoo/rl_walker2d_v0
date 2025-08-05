@@ -76,6 +76,11 @@ parser.add_argument(
     help="Use enhanced observation space (only when training from scratch)",
 )
 parser.add_argument(
+    "--enhanced_obs_transfer_learning",
+    action="store_true",
+    help="Use enhanced observation space and start from pretrained model",
+)
+parser.add_argument(
     "--pretrained_path",
     type=str,
     default="./checkpoints/pretrained_models/walker_model_1960000_steps.zip",
@@ -85,13 +90,17 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     # Check for incompatible arguments
-    if args.transfer_learning and args.enhanced_obs:
+    if args.transfer_learning and (
+        args.enhanced_obs or args.enhanced_obs_transfer_learning
+    ):
         print(
-            "Warning: --enhanced_obs is ignored when using --transfer_learning (using original observation space for compatibility)"
+            "Warning: --enhanced_obs or --enhanced_obs_transfer_learning are ignored when using --transfer_learning (using original observation space for compatibility)"
         )
 
     # Determine whether to use enhanced observations (only for training from scratch)
-    use_enhanced_obs = args.enhanced_obs and not args.transfer_learning
+    use_enhanced_obs = (
+        args.enhanced_obs or args.enhanced_obs_transfer_learning
+    ) and not args.transfer_learning
 
     # Environment setup - default to curriculum mode if curriculum flag is set
     if args.curriculum:
@@ -118,7 +127,9 @@ if __name__ == "__main__":
                 for _ in range(N_ENVS)
             ]
         )
-        if args.enhanced_obs and args.bump_challenge:
+        if args.enhanced_obs_transfer_learning:
+            folder_name = "enhanced_obs_transfer_learning"
+        elif args.enhanced_obs and args.bump_challenge:
             folder_name = "enhanced_obs_challenge"
         elif args.enhanced_obs and args.bump_practice:
             folder_name = "enhanced_obs_practice"
@@ -155,7 +166,21 @@ if __name__ == "__main__":
     )
 
     # Model initialization
-    if args.transfer_learning and os.path.exists(args.pretrained_path):
+    if args.enhanced_obs_transfer_learning and os.path.exists(args.pretrained_path):
+        print(f"Loading pretrained model from {args.pretrained_path}")
+
+        # Load the pretrained model
+        model = PPO.load(
+            args.pretrained_path, env=env, verbose=1, tensorboard_log="./logs/"
+        )
+
+        # Update hyperparameters for fine-tuning
+        model.learning_rate = learning_rate * 0.5  # Lower learning rate for fine-tuning
+        print(
+            "Loaded pretrained model successfully - training with enhanced observation space + enhanced rewards"
+        )
+
+    elif args.transfer_learning and os.path.exists(args.pretrained_path):
         print(f"Loading pretrained model from {args.pretrained_path}")
         print(
             "Note: Using original observation space for transfer learning compatibility"
