@@ -4,6 +4,7 @@ from custom_walker2d import CustomEnvWrapper
 from stable_baselines3.common.callbacks import CheckpointCallback, CallbackList
 import os
 import numpy as np
+import torch
 
 # TODO: Modify if necessary
 # Adjust based on available CPU cores (Windows CMD: wmic cpu get NumberOfLogicalProcessors)
@@ -51,7 +52,7 @@ policy_kwargs = dict(
         dict(pi=[256, 128, 128, 64], vf=[256, 128, 128, 64])
     ],  # Larger networks for complex terrain
     log_std_init=-0.5,  # Less conservative exploration
-    activation_fn="tanh",  # Better for continuous control
+    activation_fn=torch.nn.Tanh,  # Better for continuous control
 )
 
 import argparse
